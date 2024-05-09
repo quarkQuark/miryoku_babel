@@ -481,7 +481,7 @@ Not available with ~MIRYOKU_LAYERS=FLIP~.
 | U_NP | U_NP | ESC  | SPC  | TAB  |
 
 
-** Scripts and Data
+** Data
 
 
 *** Common
@@ -752,6 +752,65 @@ Source keycode to implementation equivalent (source, QMK, ZMK, KMonad, SVG, KMK)
 | WH_R        | WH_R             | U_WH_R        |               | Scroll Right  |               |
 | WH_U        | WH_U             | U_WH_U        |               | Scroll Up     | MW_UP         |
 
+
+*** Miryoku QMK
+
+
+**** nonkc
+
+Keycodes that match any of these prefixes will not have ~KC_~ automatically
+prepended.
+
+#+NAME: nonkc
+| U_ | RGB_ | OU_  | QK_ | S( | C( | SCMD( | LCMD( | TD( | CW_TOGG |
+
+
+**** license-qmk
+
+License for tangled QMK C source files.
+
+#+NAME: license-qmk
+#+BEGIN_SRC C :main no :tangle no
+// This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 2 of the License, or (at your option) any later version. This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details. You should have received a copy of the GNU General Public License along with this program. If not, see <http://www.gnu.org/licenses/>.
+#+END_SRC
+
+
+*** Miryoku ZMK
+
+
+**** nonkp
+
+Keycodes that match any of these prefixes will not have ~&kp~ automatically
+prepended.
+
+#+NAME: nonkp
+| U_ | & |
+
+
+*** Miryoku SVG
+
+
+**** nonquote
+
+Keycodes that match any of these prefixes will not be automatically quoted.
+
+#+NAME: nonquote
+| U_ |
+
+
+*** Miryoku KMK
+
+
+**** nonkcdot
+
+Keycodes that match any of these prefixes will not have ~KC.~ automatically prepended.
+
+
+#+NAME: nonkcdot
+| U_ |
+
+
+** Scripts
 
 **** table-layer-init
 
@@ -1378,63 +1437,6 @@ C-c C-c in code block to update
 import sys
 return sys.version
 #+END_SRC
-
-
-*** Miryoku QMK
-
-
-**** nonkc
-
-Keycodes that match any of these prefixes will not have ~KC_~ automatically
-prepended.
-
-#+NAME: nonkc
-| U_ | RGB_ | OU_  | QK_ | S( | C( | SCMD( | LCMD( | TD( | CW_TOGG |
-
-
-**** license-qmk
-
-License for tangled QMK C source files.
-
-#+NAME: license-qmk
-#+BEGIN_SRC C :main no :tangle no
-// This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 2 of the License, or (at your option) any later version. This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details. You should have received a copy of the GNU General Public License along with this program. If not, see <http://www.gnu.org/licenses/>.
-#+END_SRC
-
-
-*** Miryoku ZMK
-
-
-**** nonkp
-
-Keycodes that match any of these prefixes will not have ~&kp~ automatically
-prepended.
-
-#+NAME: nonkp
-| U_ | & |
-
-
-*** Miryoku SVG
-
-
-**** nonquote
-
-Keycodes that match any of these prefixes will not be automatically quoted.
-
-#+NAME: nonquote
-| U_ |
-
-
-*** Miryoku KMK
-
-
-**** nonkcdot
-
-Keycodes that match any of these prefixes will not have ~KC.~ automatically prepended.
-
-
-#+NAME: nonkcdot
-| U_ |
 
 
 ** Tangled Files
