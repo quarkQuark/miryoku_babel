@@ -504,7 +504,8 @@ Not available with ~MIRYOKU_LAYERS=FLIP~.
 
 **** symbol-names
 
-Symbol to name mappings for use in tables.
+The layer tables contain symbols as they should be recieved by the computer, but the actual keycodes sent are different.
+The appropriate mapping is governed by this table.
 
 #+NAME: symbol-names
 | `    | GRV  |
@@ -541,9 +542,12 @@ Symbol to name mappings for use in tables.
 
 **** shifted-names
 
-Shifted mappings for use in tables.
+Some of the codes above are aliases for shifted variants of other codes.
+These symbols don't directly have their own keycodes; therefore the following table is used to translate between shifted and unshifted keys.
 
 #+NAME: shifted-names
+| Base     | Shifted  |
+|----------+----------|
 | GRV      | TILD     |
 | MINS     | UNDS     |
 | EQL      | PLUS     |
@@ -582,8 +586,7 @@ Shifted mappings for use in tables.
 
 **** mods
 
-Modifiers usable in hold table.  Need to have the same name for ~KC_~ and ~_T~
-versions.
+Modifiers usable in hold table.  Need to have the same name for ~KC_~ and ~_T~ versions.
 
 #+NAME: mods
 | LSFT | LCTL | LALT | LGUI | ALGR |
@@ -758,8 +761,7 @@ Source keycode to implementation equivalent (source, QMK, ZMK, KMonad, SVG, KMK)
 
 **** nonkc
 
-Keycodes that match any of these prefixes will not have ~KC_~ automatically
-prepended.
+Keycodes that match any of these prefixes will not have ~KC_~ automatically prepended.
 
 #+NAME: nonkc
 | U_ | RGB_ | OU_  | QK_ | S( | C( | SCMD( | LCMD( | TD( | CW_TOGG |
@@ -780,8 +782,7 @@ License for tangled QMK C source files.
 
 **** nonkp
 
-Keycodes that match any of these prefixes will not have ~&kp~ automatically
-prepended.
+Keycodes that match any of these prefixes will not have ~&kp~ automatically prepended.
 
 #+NAME: nonkp
 | U_ | & |
@@ -814,60 +815,53 @@ Keycodes that match any of these prefixes will not have ~KC.~ automatically prep
 
 **** table-layer-init
 
-The ~:session~ header argument ensures that all Python source blocks share the sampe environment (unless disabled with ~:session 'none'~).  That is, they can use previously defined functions and variables.
+The ~:session~ header argument ensures that all Python source blocks share the same environment (unless disabled with ~:session 'none'~).  That is, they can use previously defined functions and variables.
+
+To initialise this environment, this block
+1. initialises the default column ~width~ for aligning lists.
+2. reads the various Org-mode tables into workable Python variables.
+3. depending on the target format, sets
+   - the ~basic_prefix~ and ~basic_suffix~ for wrapping most keycodes.
+   - a ~nonbasic_tuple~ containing the initial segments of keycodes that do not need wrapping.
+   - a dictionary ~keycode_translation_dict~ associating source keycodes with their counterparts in the target format.
+4. defines the following helper functions:
+   - ~wrap_basic~ to wrap basic keycodes with the target-appropriate prefix and suffix
+   - ~convert_symbol~ to convert the table symbols to codes
+   - ~get_translated~ to translate keycodes to the target format
+   - ~get_shifted~ to return the alias keycode for a shifted key
+   - ~trim_shifted~ *undocumented*.
 
 #+NAME: table-layer-init
 #+BEGIN_SRC python :var symbol_names_table=symbol-names :var shifted_names_table=shifted-names :var nonkc_table=nonkc :var nonkp_table=nonkp :var nonquote_table=nonquote :var nonkcdot_table=nonkcdot :var keycode_translation_table=keycode-translation :var layers_table=layers :var mods_table=mods :var target="svg"
 import os
 
-def wrap_basic(code):
-  if not str(code).startswith(nonbasic_tuple):
-    code = basic_prefix + str(code) + basic_suffix
-  return code
-
-def convert_symbol(code):
-  if code in symbol_names_dict:
-    code = symbol_names_dict[code]
-  return code
-
-def get_translated(code):
-  if code in keycode_translation_dict:
-    code = keycode_translation_dict[code]
-  return code
-
-def get_shifted(code):
-  if code in shifted_symbol_names_dict:
-    code = shifted_symbol_names_dict[code]
-    code = get_translated(code)
-  else:
-    code = None
-  return code
-
-def trim_shifted(code, shifted_code):
-  code = str(code)
-  shifted_code = str(shifted_code)
-  prefix = os.path.commonprefix([code, shifted_code])
-  space_index = prefix.find(" ")
-  doublespace_index = prefix.find("  ")
-  if space_index != -1 and space_index != doublespace_index:
-    index = space_index + 1
-  else:
-    index = len(prefix)
-  shifted_code = shifted_code[index:]
-  return shifted_code
+################################################################################
+# Default column width when aligning lists.
 
 width = 19
+
+################################################################################
+# Variables from Org tables.
+
 mods_dict = dict.fromkeys(mods_table[0])
+
 layers_dict = {}
 for layer, name in layers_table:
   layers_dict[layer] = name
+
 symbol_names_dict = {}
-shifted_symbol_names_dict = {}
 for symbol, name in symbol_names_table:
   symbol_names_dict[symbol] = name
+
+shifted_symbol_names_dict = {}
 for name, shifted_name in shifted_names_table:
   shifted_symbol_names_dict[name] = shifted_name
+
+################################################################################
+# Variables that depend on the target format.
+
 keycode_translation_dict = {}
+
 if target == 'qmk':
   nonbasic_tuple = tuple(nonkc_table[0])
   basic_prefix = 'KC_'
@@ -898,6 +892,56 @@ elif target == 'kmk':
   basic_suffix = ''
   for source, qmk, zmk, kmonad, long, kmk in keycode_translation_table:
     keycode_translation_dict[source] = kmk
+
+################################################################################
+# Helper functions.
+
+def wrap_basic(code):
+  """If the input is basic, wrap it with basic_prefix and basic_suffix."""
+  if not str(code).startswith(nonbasic_tuple):
+    code = basic_prefix + str(code) + basic_suffix
+  return code
+
+def convert_symbol(code):
+  """Convert input symbol to internal code."""
+  if code in symbol_names_dict:
+    code = symbol_names_dict[code]
+  return code
+
+def get_translated(code):
+  """Convert input code to the keycode in the appropriate format."""
+  if code in keycode_translation_dict:
+    code = keycode_translation_dict[code]
+  return code
+
+def get_shifted(code):
+  """
+  If the input code gives a different code when shifted, return that
+  different code.
+  """
+  if code in shifted_symbol_names_dict:
+    code = shifted_symbol_names_dict[code]
+    code = get_translated(code)
+  else:
+    code = None
+  return code
+
+def trim_shifted(code, shifted_code):
+  code = str(code)
+  shifted_code = str(shifted_code)
+  prefix = os.path.commonprefix([code, shifted_code])
+  space_index = prefix.find(" ")
+  doublespace_index = prefix.find("  ")
+  if space_index != -1 and space_index != doublespace_index:
+    index = space_index + 1
+  else:
+    index = len(prefix)
+  shifted_code = shifted_code[index:]
+  return shifted_code
+
+################################################################################
+# Returned comment
+
 results = '// target: ' + target
 results
 #+END_SRC
