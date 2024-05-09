@@ -582,8 +582,7 @@ Shifted mappings for use in tables.
 
 **** mods
 
-Modifiers usable in hold table.  Need to have the same name for ~KC_~ and ~_T~
-versions.
+Modifiers usable in hold table.  Need to have the same name for ~KC_~ and ~_T~ versions.
 
 #+NAME: mods
 | LSFT | LCTL | LALT | LGUI | ALGR |
@@ -812,13 +811,33 @@ Keycodes that match any of these prefixes will not have ~KC.~ automatically prep
 
 ** Scripts
 
-**** table-layer-init
-
 The ~:session~ header argument ensures that all Python source blocks share the sampe environment (unless disabled with ~:session 'none'~).  That is, they can use previously defined functions and variables.
 
 #+NAME: table-layer-init
-#+BEGIN_SRC python :var symbol_names_table=symbol-names :var shifted_names_table=shifted-names :var nonkc_table=nonkc :var nonkp_table=nonkp :var nonquote_table=nonquote :var nonkcdot_table=nonkcdot :var keycode_translation_table=keycode-translation :var layers_table=layers :var mods_table=mods :var target="svg"
+#+BEGIN_SRC python :var nonkc_table=nonkc :var nonkp_table=nonkp :var nonquote_table=nonquote :var nonkcdot_table=nonkcdot :var keycode_translation_table=keycode-translation :var target="svg" :var symbol_names_table=symbol-names :var shifted_names_table=shifted-names :var layers_table=layers :var mods_table=mods
 import os
+
+mods_dict = dict.fromkeys(mods_table[0])
+
+layers_dict = {}
+for layer, name in layers_table:
+  layers_dict[layer] = name
+
+symbol_names_dict = {}
+for symbol, name in symbol_names_table:
+  symbol_names_dict[symbol] = name
+
+shifted_symbol_names_dict = {}
+for name, shifted_name in shifted_names_table:
+  shifted_symbol_names_dict[name] = shifted_name
+
+**** table-layer-init
+
+Some data depend on the target format.
+When passed the target as a parameter, the following Python block sets these appropriately. It also returns a comment that is placed in the tangled file to record for which target format it was built.
+
+
+width = 19  # default column width when aligning lists.
 
 def wrap_basic(code):
   if not str(code).startswith(nonbasic_tuple):
@@ -856,17 +875,6 @@ def trim_shifted(code, shifted_code):
   shifted_code = shifted_code[index:]
   return shifted_code
 
-width = 19
-mods_dict = dict.fromkeys(mods_table[0])
-layers_dict = {}
-for layer, name in layers_table:
-  layers_dict[layer] = name
-symbol_names_dict = {}
-shifted_symbol_names_dict = {}
-for symbol, name in symbol_names_table:
-  symbol_names_dict[symbol] = name
-for name, shifted_name in shifted_names_table:
-  shifted_symbol_names_dict[name] = shifted_name
 keycode_translation_dict = {}
 if target == 'qmk':
   nonbasic_tuple = tuple(nonkc_table[0])
