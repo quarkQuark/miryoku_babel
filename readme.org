@@ -1,3 +1,4 @@
+#+PROPERTY: header-args:python :session :tangle no :results verbatim
 # Copyright 2022 Manna Harbour
 # https://github.com/manna-harbour/miryoku
 
@@ -754,8 +755,10 @@ Source keycode to implementation equivalent (source, QMK, ZMK, KMonad, SVG, KMK)
 
 **** table-layer-init
 
+The ~:session~ header argument ensures that all Python source blocks share the sampe environment (unless disabled with ~:session 'none'~).  That is, they can use previously defined functions and variables.
+
 #+NAME: table-layer-init
-#+BEGIN_SRC python :session :var symbol_names_table=symbol-names :var shifted_names_table=shifted-names :var nonkc_table=nonkc :var nonkp_table=nonkp :var nonquote_table=nonquote :var nonkcdot_table=nonkcdot :var keycode_translation_table=keycode-translation :var layers_table=layers :var mods_table=mods :var target="svg" :tangle no :results verbatim
+#+BEGIN_SRC python :var symbol_names_table=symbol-names :var shifted_names_table=shifted-names :var nonkc_table=nonkc :var nonkp_table=nonkp :var nonquote_table=nonquote :var nonkcdot_table=nonkcdot :var keycode_translation_table=keycode-translation :var layers_table=layers :var mods_table=mods :var target="svg"
 import os
 
 def wrap_basic(code):
@@ -849,7 +852,7 @@ results
 Produce base layer from separate alphas, thumbs, and hold tables.
 
 #+NAME: table-layer-taphold
-#+BEGIN_SRC python :session :var alphas_table=colemakdh :var thumbs_table=thumbs :var hold_table=hold :tangle no :results verbatim
+#+BEGIN_SRC python :var alphas_table=colemakdh :var thumbs_table=thumbs :var hold_table=hold
 results = ''
 for tap_row, hold_row in zip(alphas_table + thumbs_table, hold_table):
   for tap, hold in zip(tap_row, hold_row):
@@ -924,7 +927,7 @@ results
 Produce sub layers from single hand and hold tables.
 
 #+NAME: table-layer-half
-#+BEGIN_SRC python :session :var hold_table=hold :var mode="r" :var half_table=media-r :var current_layer_name="U_MOUSE" :var opposite_layer_name="U_SYM" :var shift="false" :tangle no :results verbatim
+#+BEGIN_SRC python :var hold_table=hold :var mode="r" :var half_table=media-r :var current_layer_name="U_MOUSE" :var opposite_layer_name="U_SYM" :var shift="false"
 length = len(half_table[0])
 results = ''
 for half_row, hold_row in zip(half_table, hold_table):
@@ -991,7 +994,7 @@ results
 Produce full layer from single table.  Fill for unused keys is configurable.
 
 #+NAME: table-layer-full
-#+BEGIN_SRC python :session :var alphas_table=button :var thumbs_table=button-thumbs :var fill="" :var hold_table=hold :var current_layer_name="U_BUTTON" :tangle no :results verbatim
+#+BEGIN_SRC python :var alphas_table=button :var thumbs_table=button-thumbs :var fill="" :var hold_table=hold :var current_layer_name="U_BUTTON"
 results = ''
 for full_row, hold_row in zip(alphas_table + thumbs_table, hold_table):
   for key, hold in zip(full_row, hold_row):
@@ -1305,7 +1308,7 @@ Body of miryoku_layer_selection.h.
 **** layer-names-list
 
 #+NAME: layer-names-list
-#+BEGIN_SRC python :var layers_table=layers :tangle no
+#+BEGIN_SRC python :session 'none' :var layers_table=layers
 width = 8
 results = '#define MIRYOKU_LAYER_LIST \\\n'
 for layer, name in layers_table:
@@ -1336,7 +1339,7 @@ MIRYOKU_X(FUN,    "Fun")
 **** layer-names-defines
 
 #+NAME: layer-names-defines
-#+BEGIN_SRC python :var layers_table=layers :var target="svg" :tangle no
+#+BEGIN_SRC python :session 'none' :var layers_table=layers :var target="svg"
 width = 9
 results = ''
 i = 0
@@ -1371,7 +1374,7 @@ return results
 C-c C-c in code block to update
 
 #+NAME: python-version
-#+BEGIN_SRC python :tangle no
+#+BEGIN_SRC python :session 'none'
 import sys
 return sys.version
 #+END_SRC
