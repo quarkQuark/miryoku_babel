@@ -862,56 +862,57 @@ for name, shifted_name in shifted_names_table:
 
 keycode_translation_dict = {}
 
-if target == 'qmk':
-  nonbasic_tuple = tuple(nonkc_table[0])
-  basic_prefix = 'KC_'
-  basic_suffix = ''
-  for source, qmk, zmk, kmonad, long, kmk in keycode_translation_table:
-    keycode_translation_dict[source] = qmk
-elif target == 'zmk':
-  nonbasic_tuple = tuple(nonkp_table[0])
-  basic_prefix = '&kp '
-  basic_suffix = ''
-  for source, qmk, zmk, kmonad, long, kmk in keycode_translation_table:
-    keycode_translation_dict[source] = zmk
-elif target == 'kmonad':
-  nonbasic_tuple = ()
-  basic_prefix = ''
-  basic_suffix = ''
-  for source, qmk, zmk, kmonad, long, kmk in keycode_translation_table:
-    keycode_translation_dict[source] = kmonad
-elif target == 'svg':
-  nonbasic_tuple = tuple(nonquote_table[0])
-  basic_prefix = '"'
-  basic_suffix = '"'
-  for source, qmk, zmk, kmonad, long, kmk in keycode_translation_table:
-    keycode_translation_dict[source] = long
-elif target == 'kmk':
-  nonbasic_tuple = tuple(nonkcdot_table[0])
-  basic_prefix = 'KC.'
-  basic_suffix = ''
-  for source, qmk, zmk, kmonad, long, kmk in keycode_translation_table:
-    keycode_translation_dict[source] = kmk
+match target:
+  case 'qmk':
+    nonbasic_tuple = tuple(nonkc_table[0])
+    basic_prefix = 'KC_'
+    basic_suffix = ''
+    for source, qmk, zmk, kmonad, long, kmk in keycode_translation_table:
+      keycode_translation_dict[source] = qmk
+  case 'zmk':
+    nonbasic_tuple = tuple(nonkp_table[0])
+    basic_prefix = '&kp '
+    basic_suffix = ''
+    for source, qmk, zmk, kmonad, long, kmk in keycode_translation_table:
+      keycode_translation_dict[source] = zmk
+  case 'kmonad':
+    nonbasic_tuple = ()
+    basic_prefix = ''
+    basic_suffix = ''
+    for source, qmk, zmk, kmonad, long, kmk in keycode_translation_table:
+      keycode_translation_dict[source] = kmonad
+  case 'svg':
+    nonbasic_tuple = tuple(nonquote_table[0])
+    basic_prefix = '"'
+    basic_suffix = '"'
+    for source, qmk, zmk, kmonad, long, kmk in keycode_translation_table:
+      keycode_translation_dict[source] = long
+  case 'kmk':
+    nonbasic_tuple = tuple(nonkcdot_table[0])
+    basic_prefix = 'KC.'
+    basic_suffix = ''
+    for source, qmk, zmk, kmonad, long, kmk in keycode_translation_table:
+      keycode_translation_dict[source] = kmk
 
 ################################################################################
 # Helper functions.
 
 def wrap_basic(code):
   """If the input is basic, wrap it with basic_prefix and basic_suffix."""
-  if not str(code).startswith(nonbasic_tuple):
-    code = basic_prefix + str(code) + basic_suffix
-  return code
+  if str(code).startswith(nonbasic_tuple):
+    return code
+  return basic_prefix + str(code) + basic_suffix
 
 def convert_symbol(code):
   """Convert input symbol to internal code."""
   if code in symbol_names_dict:
-    code = symbol_names_dict[code]
+    return symbol_names_dict[code]
   return code
 
 def get_translated(code):
   """Convert input code to the keycode in the appropriate format."""
   if code in keycode_translation_dict:
-    code = keycode_translation_dict[code]
+    return keycode_translation_dict[code]
   return code
 
 def get_shifted(code):
@@ -920,11 +921,9 @@ def get_shifted(code):
   different code.
   """
   if code in shifted_symbol_names_dict:
-    code = shifted_symbol_names_dict[code]
-    code = get_translated(code)
-  else:
-    code = None
-  return code
+    shifted_code = shifted_symbol_names_dict[code]
+    return get_translated(shifted_code)
+  return None
 
 def trim_shifted(code, shifted_code):
   code = str(code)
@@ -936,8 +935,7 @@ def trim_shifted(code, shifted_code):
     index = space_index + 1
   else:
     index = len(prefix)
-  shifted_code = shifted_code[index:]
-  return shifted_code
+  return shifted_code[index:]
 
 ################################################################################
 # Returned comment
@@ -957,6 +955,8 @@ Produce base layer from separate alphas, thumbs, and hold tables.
 #+NAME: table-layer-taphold
 #+BEGIN_SRC python :var alphas_table=colemakdh :var thumbs_table=thumbs :var hold_table=hold
 results = ''
+
+# Iterate over the keys in the base layer.
 for tap_row, hold_row in zip(alphas_table + thumbs_table, hold_table):
   for tap, hold in zip(tap_row, hold_row):
     code = tap
@@ -967,43 +967,45 @@ for tap_row, hold_row in zip(alphas_table + thumbs_table, hold_table):
       code = 'U_NU'
     if hold in mods_dict:
       hold = get_translated(hold)
-      if target == 'qmk':
-        code = wrap_basic(code)
-        code = str(hold) + '_T(' + code + ')'
-      elif target == 'zmk':
-        code = 'U_MT(' + str(hold) + ', ' + code + ')'
-      elif target == 'kmonad':
-        code = 'U_MT(' + code + ', ' + str(hold) + ')'
-      elif target == 'svg':
-        code = wrap_basic(code)
-        hold = wrap_basic(hold)
-        if shifted_code != None:
-          shifted_code = wrap_basic(shifted_code)
-          code = 'U_SMT(' + shifted_code + ', ' + code + ', ' + hold + ')'
-        else:
-          code = 'U_MT(' + code + ', ' + hold + ')'
-      elif target == 'kmk':
-        code = wrap_basic(code)
-        hold = wrap_basic(hold)
-        code = 'U_MT(' + code + ',' + hold + ')'
+      match target:
+        case 'qmk':
+          code = wrap_basic(code)
+          code = str(hold) + '_T(' + code + ')'
+        case 'zmk':
+          code = 'U_MT(' + str(hold) + ', ' + code + ')'
+        case 'kmonad':
+          code = 'U_MT(' + code + ', ' + str(hold) + ')'
+        case 'svg':
+          code = wrap_basic(code)
+          hold = wrap_basic(hold)
+          if shifted_code != None:
+            shifted_code = wrap_basic(shifted_code)
+            code = 'U_SMT(' + shifted_code + ', ' + code + ', ' + hold + ')'
+          else:
+            code = 'U_MT(' + code + ', ' + hold + ')'
+        case 'kmk':
+          code = wrap_basic(code)
+          hold = wrap_basic(hold)
+          code = 'U_MT(' + code + ',' + hold + ')'
     elif hold in layers_dict:
-      if target == 'qmk':
-        code = wrap_basic(code)
-        code = 'LT(' + str(hold) + ',' + code + ')'
-      elif target == 'zmk':
-        code = 'U_LT(' + str(hold) + ', ' + code + ')'
-      elif target == 'kmonad':
-        code = 'U_LT(' + code + ', ' + str(hold) + ')'
-      elif target == 'svg':
-        code = wrap_basic(code)
-        if shifted_code != None:
-          shifted_code = wrap_basic(shifted_code)
-          code = 'U_SLT(' + shifted_code + ', ' + code + ', ' + str(hold) + ')'
-        else:
+      match target:
+        case 'qmk':
+          code = wrap_basic(code)
+          code = 'LT(' + str(hold) + ',' + code + ')'
+        case 'zmk':
+          code = 'U_LT(' + str(hold) + ', ' + code + ')'
+        case 'kmonad':
           code = 'U_LT(' + code + ', ' + str(hold) + ')'
-      if target == 'kmk':
-        code = wrap_basic(code)
-        code = 'U_LT(' + str(hold) + ',' + code + ')'
+        case 'svg':
+          code = wrap_basic(code)
+          if shifted_code != None:
+            shifted_code = wrap_basic(shifted_code)
+            code = 'U_SLT(' + shifted_code + ', ' + code + ', ' + str(hold) + ')'
+          else:
+            code = 'U_LT(' + code + ', ' + str(hold) + ')'
+        case 'kmk':
+          code = wrap_basic(code)
+          code = 'U_LT(' + str(hold) + ',' + code + ')'
     else:
       if target == 'svg' and shifted_code != None:
         shifted_code = trim_shifted(code, shifted_code)
@@ -1014,6 +1016,7 @@ for tap_row, hold_row in zip(alphas_table + thumbs_table, hold_table):
         code = wrap_basic(code)
     results += (code + ',').ljust(width)
   results += '\\\n'
+
 results = results.rstrip(', \\\n')
 results
 #+END_SRC
@@ -1067,16 +1070,17 @@ for half_row, hold_row in zip(half_table, hold_table):
               layer_name = current_layer_name
             else:
               layer_name = opposite_layer_name
-            if target == 'qmk':
-              code = 'TD(U_TD_' + layer_name + ')'
-            elif target == 'zmk':
-              code = '&u_to_' + layer_name
-            elif target == 'kmonad':
-              code = 'U_DF(' + layer_name + ')'
-            elif target == 'svg':
-              code = 'U_DF(' + layer_name + ')'
-            elif target == 'kmk':
-              code = 'U_DF(' + layer_name + ')'
+            match target:
+              case 'qmk':
+                code = 'TD(U_TD_' + layer_name + ')'
+              case 'zmk':
+                code = '&u_to_' + layer_name
+              case 'kmonad':
+                code = 'U_DF(' + layer_name + ')'
+              case 'svg':
+                code = 'U_DF(' + layer_name + ')'
+              case 'kmk':
+                code = 'U_DF(' + layer_name + ')'
           else:
             code = wrap_basic(hold)
         results += (str(code) + ',').ljust(width)
