@@ -821,7 +821,6 @@ To initialise this environment, this block
 1. initialises the default column ~width~ for aligning lists.
 2. reads the various Org-mode tables into workable Python variables.
 3. depending on the target format, sets
-   - the ~basic_prefix~ and ~basic_suffix~ for wrapping most keycodes.
    - a ~nonbasic_tuple~ containing the initial segments of keycodes that do not need wrapping.
    - a dictionary ~keycode_translation_dict~ associating source keycodes with their counterparts in the target format.
 4. defines the following helper functions:
@@ -850,30 +849,30 @@ def convert_symbol(code):
 match target:
   case 'qmk':
     nonbasic_tuple = tuple(nonkc_table[0])
-    basic_prefix = 'KC_'
-    basic_suffix = ''
   case 'zmk':
     nonbasic_tuple = tuple(nonkp_table[0])
-    basic_prefix = '&kp '
-    basic_suffix = ''
   case 'kmonad':
     nonbasic_tuple = ()
-    basic_prefix = ''
-    basic_suffix = ''
   case 'svg':
     nonbasic_tuple = tuple(nonquote_table[0])
-    basic_prefix = '"'
-    basic_suffix = '"'
   case 'kmk':
     nonbasic_tuple = tuple(nonkcdot_table[0])
-    basic_prefix = 'KC.'
-    basic_suffix = ''
 
 def wrap_basic(code):
   """If the input is basic, wrap it with basic_prefix and basic_suffix."""
   if str(code).startswith(nonbasic_tuple):
     return code
-  return basic_prefix + str(code) + basic_suffix
+  match target:
+    case 'qmk':
+      return f'KC_{code}'
+    case 'zmk':
+      return f'&kp {code}'
+    case 'kmonad':
+      return code
+    case 'svg':
+      return f'"{code}"'
+    case 'kmk':
+      return f'KC.{code}'
 
 ################################################################################
 # Converting codes to the target format.
