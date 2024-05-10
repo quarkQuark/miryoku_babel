@@ -836,66 +836,38 @@ To initialise this environment, this block
 import os
 
 ################################################################################
-# Default column width when aligning lists.
+# Converting table symbols to internal codes.
 
-width = 19
+symbol_names_dict = {symbol: name for symbol, name in symbol_names_table}
 
-################################################################################
-# Variables from Org tables.
-
-mods_dict = dict.fromkeys(mods_table[0])
-
-layers_dict = {}
-for layer, name in layers_table:
-  layers_dict[layer] = name
-
-symbol_names_dict = {}
-for symbol, name in symbol_names_table:
-  symbol_names_dict[symbol] = name
-
-shifted_symbol_names_dict = {}
-for name, shifted_name in shifted_names_table:
-  shifted_symbol_names_dict[name] = shifted_name
+def convert_symbol(code):
+  """Convert input symbol to internal code."""
+  return symbol_names_dict.get(code, code)
 
 ################################################################################
-# Variables that depend on the target format.
-
-keycode_translation_dict = {}
+# Wrapping basic keycodes.
 
 match target:
   case 'qmk':
     nonbasic_tuple = tuple(nonkc_table[0])
     basic_prefix = 'KC_'
     basic_suffix = ''
-    for source, qmk, zmk, kmonad, long, kmk in keycode_translation_table:
-      keycode_translation_dict[source] = qmk
   case 'zmk':
     nonbasic_tuple = tuple(nonkp_table[0])
     basic_prefix = '&kp '
     basic_suffix = ''
-    for source, qmk, zmk, kmonad, long, kmk in keycode_translation_table:
-      keycode_translation_dict[source] = zmk
   case 'kmonad':
     nonbasic_tuple = ()
     basic_prefix = ''
     basic_suffix = ''
-    for source, qmk, zmk, kmonad, long, kmk in keycode_translation_table:
-      keycode_translation_dict[source] = kmonad
   case 'svg':
     nonbasic_tuple = tuple(nonquote_table[0])
     basic_prefix = '"'
     basic_suffix = '"'
-    for source, qmk, zmk, kmonad, long, kmk in keycode_translation_table:
-      keycode_translation_dict[source] = long
   case 'kmk':
     nonbasic_tuple = tuple(nonkcdot_table[0])
     basic_prefix = 'KC.'
     basic_suffix = ''
-    for source, qmk, zmk, kmonad, long, kmk in keycode_translation_table:
-      keycode_translation_dict[source] = kmk
-
-################################################################################
-# Helper functions.
 
 def wrap_basic(code):
   """If the input is basic, wrap it with basic_prefix and basic_suffix."""
@@ -903,27 +875,39 @@ def wrap_basic(code):
     return code
   return basic_prefix + str(code) + basic_suffix
 
-def convert_symbol(code):
-  """Convert input symbol to internal code."""
-  if code in symbol_names_dict:
-    return symbol_names_dict[code]
-  return code
+################################################################################
+# Converting codes to the target format.
+
+targets = ['qmk', 'zmk', 'kmonad', 'svg', 'kmk']
+target_column = targets.index(target)
+
+keycode_translation_full_dict = {
+  row[0]: row[1:]
+  for row in keycode_translation_table
+}
+
+keycode_translation_dict = {
+  key: keycode_translation_full_dict[key][target_column]
+  for key in keycode_translation_full_dict
+}
 
 def get_translated(code):
   """Convert input code to the keycode in the appropriate format."""
-  if code in keycode_translation_dict:
-    return keycode_translation_dict[code]
-  return code
+  return keycode_translation_dict.get(code, code)
+
+################################################################################
+# Other.
 
 def get_shifted(code):
   """
   If the input code gives a different code when shifted, return that
   different code.
   """
-  if code in shifted_symbol_names_dict:
-    shifted_code = shifted_symbol_names_dict[code]
-    return get_translated(shifted_code)
-  return None
+  shifted_symbol_names_dict = {
+    name: get_translated(shifted_name)
+    for name, shifted_name in shifted_names_table
+  }
+  return shifted_symbol_names_dict.get(code, None)
 
 def trim_shifted(code, shifted_code):
   code = str(code)
@@ -937,8 +921,11 @@ def trim_shifted(code, shifted_code):
     index = len(prefix)
   return shifted_code[index:]
 
-################################################################################
-# Returned comment
+width = 19
+
+mods_dict = dict.fromkeys(mods_table[0])
+
+layers_dict = {layer: name for layer, name in layers_table}
 
 results = '// target: ' + target
 results
@@ -1022,10 +1009,10 @@ results
 #+END_SRC
 
 #+RESULTS: table-layer-taphold
-: "Q",               "W",               "F",               "P",               "B",               "J",               "L",               "U",               "Y",               U_S("&quot;", "&apos;"),\
+: "Q",               "W",               "F",               "P",               "B",               "J",               "L",               "U",               "Y",               U_S("\"", "'"),    \
 : U_MT("A", "Meta"), U_MT("R", "Alt"),  U_MT("S", "Ctrl"), U_MT("T", "Shift"),"G",               "M",               U_MT("N", "Shift"),U_MT("E", "Ctrl"), U_MT("I", "Alt"),  U_MT("O", "Meta"), \
-: U_LT("Z", U_BUTTON),U_MT("X", "AltGR"),"C",               "D",               "V",               "K",               "H",               U_S("&lt;", U_COMM),U_SMT("&gt;", ".", "AltGR"),U_SLT("?", "/", U_BUTTON),\
-: U_NP,              U_NP,              U_LT("Esc", U_MEDIA),U_LT("Space", U_NAV),U_LT("Tab", U_MOUSE),U_LT("Enter", U_SYM),U_LT("Bckspc", U_NUM),U_LT("Delete", U_FUN),U_NP,              U_NP
+: U_LT("Z", U_BUTTON),U_MT("X", "AltGr"),"C",               "D",               "V",               "K",               "H",               U_S("<", "S_COMM"),U_SMT(">", ".", "AltGr"),U_SLT("?", "/", U_BUTTON),\
+: U_NP,              U_NP,              U_LT("Esc", U_MEDIA),U_LT("Space", U_NAV),U_LT("Tab", U_MOUSE),U_LT("Enter", U_SYM),U_LT("Back Space", U_NUM),U_LT("Delete", U_FUN),U_NP,              U_NP
 
 
 **** table-layer-half
