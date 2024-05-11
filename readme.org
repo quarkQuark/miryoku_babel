@@ -1429,12 +1429,14 @@ Body of miryoku_layer_selection.h.
 
 **** layer-names-list
 
+Convert the layers table into the block of C code for defining the layers.
+
 #+NAME: layer-names-list
 #+BEGIN_SRC python :session 'none' :var layers_table=layers
 width = 8
 results = '#define MIRYOKU_LAYER_LIST \\\n'
 for layer, name in layers_table:
-  stripped=layer.lstrip('U_')
+  stripped = layer.lstrip('U_')
   results += 'MIRYOKU_X(' + ( stripped + ', ').ljust(width)
   results += '"' + name + '"'
   results += ') \\\n'
@@ -1459,6 +1461,8 @@ MIRYOKU_X(FUN,    "Fun")
 
 
 **** layer-names-defines
+
+Convert the layers table into the block of C code defining the layer keycodes in the target format.  Takes the ~target~ as an argument (default ~"svg"~).
 
 #+NAME: layer-names-defines
 #+BEGIN_SRC python :session 'none' :var layers_table=layers :var target="svg"
