@@ -15,16 +15,19 @@ This document describes Miryoku Babel only.  For Miryoku documentation, implemen
 
 [[https://www.gnu.org/software/emacs/][Emacs]] is an extensible text editor.  [[https://orgmode.org/][Org]] is an emacs mode for structured text. [[https://orgmode.org/worg/org-contrib/babel/][Babel]] is org's ability to execute source code from within org documents.  This org document uses babel to generate the layer data source files for Miryoku implementations.
 
-[[#layer-tables][Layers]] and [[#alternative-layouts][alternative layouts]] are maintained in org tables.  The tables are [[#tangling][tangled]] into [[#tangled-files][source files]] via [[#scripts-and-data][python scripts and additional data tables]].
+[[#layer-tables][Layers]] and [[#alternative-layouts][alternative layouts]] are maintained in org tables.  The tables are [[#tangling][tangled]] into [[#tangled-files][source files]] via [[#scripts][python scripts]] and [[#data][additional data tables]].
 
 Changes to Miryoku layers can be made with convenient [[https://orgmode.org/manual/Built_002din-Table-Editor.html][org table editing commands]].
 
-For those not using emacs, changes can also be made in any editor and the tangling can be performed [[#outside-emacs][from the shell]] or via a [[#github-actions-workflow][GitHub actions workflow]].
+For those not using Emacs, changes can also be made in any editor and the tangling can be performed [[#outside-emacs][from the shell]] or via a [[#github-actions-workflow][GitHub actions workflow]].
 
 The scripts can also be used by other layouts to generated multi-firmware keymaps from a single source.
 
 
 ** Tangling
+:PROPERTIES:
+:CUSTOM_ID: tangling
+:END:
 
 
 *** Locally
@@ -37,7 +40,7 @@ Emacs, python, and org 9.4 or later are required.
 
 ***** Initial Setup
 
-Add the following to your emacs initialisation file:
+Add the following to your Emacs initialisation file:
 
 #+BEGIN_SRC emacs-lisp
 (require 'ob-python)
@@ -52,11 +55,17 @@ Call ~org-babel-tangle~ (~C-c~ ~C-v~ ~t~).
 
 
 **** Outside Emacs
+:PROPERTIES:
+:CUSTOM_ID: outside-emacs
+:END:
 
 See the Install Org and Tangle steps in [[.github/workflows/main.yml]] for example shell commands that can be run locally.
 
 
 *** GitHub Actions Workflow
+:PROPERTIES:
+:CUSTOM_ID: github-actions-workflow
+:END:
 
 
 ***** Initial Setup
@@ -72,6 +81,9 @@ Visit the Actions tab, select the Build workflow, select Run workflow, select th
 
 
 ** Layer Tables
+:PROPERTIES:
+:CUSTOM_ID: layer-tables
+:END:
 
 The layers are maintained in tables.  ~U_NP~ indicates the key is not present and is used to fill in the table around the thumb keys.
 
@@ -175,6 +187,9 @@ The base layer is maintained as separate tables for tap alphas, tap thumbs, and 
 
 
 *** Alternative Layouts
+:PROPERTIES:
+:CUSTOM_ID: alternative-layouts
+:END:
 
 
 **** Alphas
@@ -482,6 +497,9 @@ Not available with ~MIRYOKU_LAYERS=FLIP~.
 
 
 ** Data
+:PROPERTIES:
+:CUSTOM_ID: data
+:END:
 
 
 *** Common
@@ -812,6 +830,9 @@ Keycodes that match any of these prefixes will not have ~KC.~ automatically prep
 
 
 ** Scripts
+:PROPERTIES:
+:CUSTOM_ID: scripts
+:END:
 
 **** table-layer-init
 
@@ -1507,6 +1528,9 @@ return sys.version
 
 
 ** Tangled Files
+:PROPERTIES:
+:CUSTOM_ID: tangled-files
+:END:
 
 
 *** Miryoku QMK
