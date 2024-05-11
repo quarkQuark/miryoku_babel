@@ -817,7 +817,7 @@ Keycodes that match any of these prefixes will not have ~KC.~ automatically prep
 
 The ~:session~ header argument ensures that all Python source blocks share the same environment (unless disabled with ~:session 'none'~).  That is, they can use previously defined functions and variables.
 
-To initialise this environment, this block
+This block takes and argument specifying the target format /(default: ~"svg"~)/ and initialises the Python environment by doing the following:
 1. initialises the default column ~width~ for aligning lists.
 2. reads the various Org-mode tables into workable Python variables.
 3. depending on the target format, sets
@@ -831,7 +831,7 @@ To initialise this environment, this block
    - ~trim_shifted~ *undocumented*.
 
 #+NAME: table-layer-init
-#+BEGIN_SRC python :var symbol_names_table=symbol-names :var shifted_names_table=shifted-names :var nonkc_table=nonkc :var nonkp_table=nonkp :var nonquote_table=nonquote :var nonkcdot_table=nonkcdot :var keycode_translation_table=keycode-translation :var layers_table=layers :var mods_table=mods :var target="svg"
+#+BEGIN_SRC python :var target="svg" :var symbol_names_table=symbol-names :var shifted_names_table=shifted-names :var nonkc_table=nonkc :var nonkp_table=nonkp :var nonquote_table=nonquote :var nonkcdot_table=nonkcdot :var keycode_translation_table=keycode-translation :var layers_table=layers :var mods_table=mods
 import os
 
 ################################################################################
@@ -936,7 +936,10 @@ results
 
 **** table-layer-taphold
 
-Produce base layer from separate alphas, thumbs, and hold tables.
+Produce base layer from separate alphas, thumbs, and hold tables.  This block takes the following arguments:
+- ~alphas_table~ (default ~colemakdh~): the name of the table that defines the alpha keys
+- ~thumbs_table~ (default ~thumbs~): the name of the table that defines the thumb keys (~thumbs~, ~thumbs-flip~ or ~button-thumbs~)
+- ~hold_table~ (default ~"hold"~​): use ~"hold-flip"~ to use the flipped variant instead.
 
 #+NAME: table-layer-taphold
 #+BEGIN_SRC python :var alphas_table=colemakdh :var thumbs_table=thumbs :var hold_table=hold
@@ -1032,21 +1035,22 @@ results
 
 **** table-layer-half
 
-Produce sub layers from single hand and hold tables.
+Produce sub layers from single hand and hold tables.  This block takes the following arguments:
+- ~current_layer_name~ (default ~"U_MOUSE"~): the name of the currently activated layer
+- ~opposite_layer_name~ (default ~"U_SYM"~): the name of the layer that would be activated by holding the corresponding key on the opposite hand (allowing one-handed layer use)
+- ~half_table~ (default ~media-r~): the name of the table describing the layer's keys
+- ~mode~ (default ~"l"~​): which half of the keyboard is affected by the layer (~"l"~ or ~"r"~)
+- ~hold_table~ (default ~"hold"~​): use ~"hold-flip"~ to use the flipped variant instead.
 
 #+NAME: table-layer-half
-#+BEGIN_SRC python :var hold_table=hold :var mode="r" :var half_table=media-r :var current_layer_name="U_MOUSE" :var opposite_layer_name="U_SYM" :var shift="false"
+#+BEGIN_SRC python :var current_layer_name="U_MOUSE" :var opposite_layer_name="U_SYM" :var half_table=media-r :var mode="r" :var hold_table=hold
 def layer_half(code):
   """Handle keys on the half on which the layer is enabled."""
   shifted_code = get_shifted(code)
-  if shifted_code != None:
-    if shift == "true":
-      code = shifted_code
-    elif target == 'svg':
-      code = get_translated(code)
-      shifted_code = trim_shifted(code, shifted_code)
-      code = f'U_S({str(wrap_basic(shifted_code))}, {str(wrap_basic(code))})'
   code = get_translated(code)
+  if target == 'svg' and shifted_code != None:
+    shifted_code = trim_shifted(code, shifted_code)
+    code = f'U_S({str(wrap_basic(shifted_code))}, {str(wrap_basic(code))})'
   if code == '':
     code = 'U_NU'
   return wrap_basic(code)
