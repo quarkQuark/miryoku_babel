@@ -940,70 +940,86 @@ Produce base layer from separate alphas, thumbs, and hold tables.
 
 #+NAME: table-layer-taphold
 #+BEGIN_SRC python :var alphas_table=colemakdh :var thumbs_table=thumbs :var hold_table=hold
-results = ''
+def mod_tap(mod, code, shifted_code):
+  """
+  Return a keycode that sends mod when held and code (or shifted_code) when
+  tapped.
+  """
+  match target:
+    case 'qmk':
+      code = wrap_basic(code)
+      return f'{mod}_T({code})'
+    case 'zmk':
+      return f'U_MT({mod}, {code})'
+    case 'kmonad':
+      return f'U_MT({code}, {mod})'
+    case 'svg':
+      code = wrap_basic(code)
+      mod = wrap_basic(mod)
+      if shifted_code == None:
+        return f'U_MT({code}, {mod})'
+      shifted_code = wrap_basic(shifted_code)
+      return f'U_SMT({shifted_code}, {code}, {mod})'
+    case 'kmk':
+      code = wrap_basic(code)
+      mod = wrap_basic(mod)
+      return f'U_MT({code},{mod})'
+
+def layer_tap(layer, code, shifted_code):
+  """
+  Return a keycode that activates layer when held and sends code (or
+  shifted_code) when tapped.
+  """
+  match target:
+    case 'qmk':
+      code = wrap_basic(code)
+      return f'LT({layer},{code})'
+    case 'zmk':
+      return f'U_LT({layer}, {code})'
+    case 'kmonad':
+      return f'U_LT({code}, {layer})'
+    case 'svg':
+      code = wrap_basic(code)
+      if shifted_code == None:
+        return f'U_LT({code}, {layer})'
+      shifted_code = wrap_basic(shifted_code)
+      return f'U_SLT({shifted_code}, {code}, {layer})'
+    case 'kmk':
+      code = wrap_basic(code)
+      return f'U_LT({layer},{code})'
+
+def format_code(hold, code, shifted_code):
+  """
+  Return a keycode formatted such that it does the hold action (if recognised)
+  when held and sends code (or shifted_code) when tapped.
+  """
+  if hold in mods_dict:
+    mod = str(get_translated(hold))
+    return mod_tap(mod, code, shifted_code)
+  elif hold in layers_dict:
+    layer = str(hold)
+    return layer_tap(layer, code, shifted_code)
+  elif target == 'svg' and shifted_code != None:
+    shifted_code = trim_shifted(code, shifted_code)
+    shifted_code = wrap_basic(shifted_code)
+    code = wrap_basic(code)
+    return f'U_S({shifted_code}, {code})'
+  return wrap_basic(code)
 
 # Iterate over the keys in the base layer.
+results = ''
 for tap_row, hold_row in zip(alphas_table + thumbs_table, hold_table):
   for tap, hold in zip(tap_row, hold_row):
-    code = tap
-    code = convert_symbol(code)
-    shifted_code = get_shifted(code)
-    code = get_translated(code)
+    converted_tap = convert_symbol(tap)
+    code = get_translated(converted_tap)
     if code == '':
       code = 'U_NU'
-    if hold in mods_dict:
-      hold = get_translated(hold)
-      match target:
-        case 'qmk':
-          code = wrap_basic(code)
-          code = str(hold) + '_T(' + code + ')'
-        case 'zmk':
-          code = 'U_MT(' + str(hold) + ', ' + code + ')'
-        case 'kmonad':
-          code = 'U_MT(' + code + ', ' + str(hold) + ')'
-        case 'svg':
-          code = wrap_basic(code)
-          hold = wrap_basic(hold)
-          if shifted_code != None:
-            shifted_code = wrap_basic(shifted_code)
-            code = 'U_SMT(' + shifted_code + ', ' + code + ', ' + hold + ')'
-          else:
-            code = 'U_MT(' + code + ', ' + hold + ')'
-        case 'kmk':
-          code = wrap_basic(code)
-          hold = wrap_basic(hold)
-          code = 'U_MT(' + code + ',' + hold + ')'
-    elif hold in layers_dict:
-      match target:
-        case 'qmk':
-          code = wrap_basic(code)
-          code = 'LT(' + str(hold) + ',' + code + ')'
-        case 'zmk':
-          code = 'U_LT(' + str(hold) + ', ' + code + ')'
-        case 'kmonad':
-          code = 'U_LT(' + code + ', ' + str(hold) + ')'
-        case 'svg':
-          code = wrap_basic(code)
-          if shifted_code != None:
-            shifted_code = wrap_basic(shifted_code)
-            code = 'U_SLT(' + shifted_code + ', ' + code + ', ' + str(hold) + ')'
-          else:
-            code = 'U_LT(' + code + ', ' + str(hold) + ')'
-        case 'kmk':
-          code = wrap_basic(code)
-          code = 'U_LT(' + str(hold) + ',' + code + ')'
-    else:
-      if target == 'svg' and shifted_code != None:
-        shifted_code = trim_shifted(code, shifted_code)
-        shifted_code = wrap_basic(shifted_code)
-        code = wrap_basic(code)
-        code = 'U_S(' + shifted_code + ', ' + code + ')'
-      else:
-        code = wrap_basic(code)
-    results += (code + ',').ljust(width)
+    shifted_code = get_shifted(converted_tap)
+    wrapped_code = format_code(hold, code, shifted_code)
+    results += (wrapped_code + ',').ljust(width)
   results += '\\\n'
-
 results = results.rstrip(', \\\n')
+
 results
 #+END_SRC
 
