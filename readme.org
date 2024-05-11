@@ -1112,29 +1112,31 @@ results
 **** table-layer-full
 
 Produce full layer from single table.  Fill for unused keys is configurable.
+This block takes the following arguments:
+- ~current_layer_name~ (default ~"U_MOUSE"~): the name of the currently activated layer
+- ~alphas_table~ (default ~colemakdh~): the name of the table that defines the alpha keys
+- ~thumbs_table~ (default ~thumbs~): the name of the table that defines the thumb keys (~thumbs~, ~thumbs-flip~ or ~button-thumbs~)
+- ~hold_table~ (default ~"hold"~​): use ~"hold-flip"~ to use the flipped variant instead.
+- ~fill~ (default ~""~): string to use in place of unused keys.
 
 #+NAME: table-layer-full
-#+BEGIN_SRC python :var alphas_table=button :var thumbs_table=button-thumbs :var fill="" :var hold_table=hold :var current_layer_name="U_BUTTON"
+#+BEGIN_SRC python :var current_layer_name="U_BUTTON" :var alphas_table=button :var thumbs_table=button-thumbs :var hold_table=hold :var fill=""
 results = ''
 for full_row, hold_row in zip(alphas_table + thumbs_table, hold_table):
   for key, hold in zip(full_row, hold_row):
-    if key in symbol_names_dict:
-      code = symbol_names_dict[key]
-    else:
-      code = key
+    code = symbol_names_dict.get(key, key)
     if code == '':
       code = fill
-    if code in keycode_translation_dict:
-      code = keycode_translation_dict[code]
+    code = keycode_translation_dict.get(code, code)
     if code == '':
       code = 'U_NU'
-    if not str(code).startswith(nonbasic_tuple):
-      code = wrap_basic(code)
+    code = wrap_basic(code)
     if target == 'svg' and hold == current_layer_name:
-      code = 'U_HELD(' + code + ')'
+      code = f'U_HELD({code})'
     results += (code + ',').ljust(width)
   results += '\\\n'
 results = results.rstrip(', \\\n')
+
 results
 #+END_SRC
 
