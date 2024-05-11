@@ -1036,65 +1036,72 @@ Produce sub layers from single hand and hold tables.
 
 #+NAME: table-layer-half
 #+BEGIN_SRC python :var hold_table=hold :var mode="r" :var half_table=media-r :var current_layer_name="U_MOUSE" :var opposite_layer_name="U_SYM" :var shift="false"
-length = len(half_table[0])
+def layer_half(code):
+  """Handle keys on the half on which the layer is enabled."""
+  shifted_code = get_shifted(code)
+  if shifted_code != None:
+    if shift == "true":
+      code = shifted_code
+    elif target == 'svg':
+      code = get_translated(code)
+      shifted_code = trim_shifted(code, shifted_code)
+      code = f'U_S({str(wrap_basic(shifted_code))}, {str(wrap_basic(code))})'
+  code = get_translated(code)
+  if code == '':
+    code = 'U_NU'
+  return wrap_basic(code)
+
+def translate_layer_name(layer_name):
+  """How to encode other layer keys on the same hand as the key being held."""
+  match target:
+    case 'qmk':
+      return f'TD(U_TD_{layer_name})'
+    case 'zmk':
+      return f'&u_to_{layer_name}'
+    case 'kmonad':
+      return f'U_DF({layer_name})'
+    case 'svg':
+      return f'U_DF({layer_name})'
+    case 'kmk':
+      return f'U_DF({layer_name})'
+
+def hold_half(hold):
+  """Handle keys on the half with the layer key (opposite the layer itself)."""
+  if hold in mods_dict:
+    return wrap_basic(get_translated(hold))
+  hold = get_translated(hold)
+  if hold == current_layer_name and target == 'svg':
+    return 'U_HELD(U_NA)'
+  elif hold in layers_dict or hold == '':
+    return 'U_NA'
+  elif hold == 'LOCK_CUR':
+    return translate_layer_name(current_layer_name)
+  elif hold == 'LOCK_OPP':
+    return translate_layer_name(opposite_layer_name)
+  return wrap_basic(hold)
+
 results = ''
 for half_row, hold_row in zip(half_table, hold_table):
-  hold_row_l, hold_row_r = hold_row[:length], hold_row[length:]
-  for lr, hold_row_lr in ('l', hold_row_l), ('r', hold_row_r):
+  length = len(half_table[0])  # Number of columns per hand.
+  for lr, hold_row_lr in ('l', hold_row[:length]), ('r', hold_row[length:]):
     if lr == mode:
-      for half in half_row:
-        code = half
-        code = convert_symbol(code)
-        shifted_code = get_shifted(code)
-        if shift == "true" and shifted_code != None:
-          code = shifted_code
-        elif target == 'svg' and shifted_code != None:
-          code = get_translated(code)
-          shifted_code = trim_shifted(code, shifted_code)
-          code = 'U_S(' + str(wrap_basic(shifted_code)) + ', ' + str(wrap_basic(code)) +')'
-        code = get_translated(code)
-        if code == '':
-          code = 'U_NU'
-        code = wrap_basic(code)
+      for code in half_row:
+        code = layer_half(convert_symbol(code))
         results += (str(code) + ',').ljust(width)
     else:
       for hold in hold_row_lr:
-        if hold in mods_dict:
-          code = wrap_basic(get_translated(hold))
-        else:
-          hold = get_translated(hold)
-          if hold == '' or hold in layers_dict:
-            code = 'U_NA'
-            if target == 'svg' and hold == current_layer_name:
-              code = 'U_HELD(' + code + ')'
-          elif hold == 'LOCK_CUR' or hold == 'LOCK_OPP':
-            if hold == 'LOCK_CUR':
-              layer_name = current_layer_name
-            else:
-              layer_name = opposite_layer_name
-            match target:
-              case 'qmk':
-                code = 'TD(U_TD_' + layer_name + ')'
-              case 'zmk':
-                code = '&u_to_' + layer_name
-              case 'kmonad':
-                code = 'U_DF(' + layer_name + ')'
-              case 'svg':
-                code = 'U_DF(' + layer_name + ')'
-              case 'kmk':
-                code = 'U_DF(' + layer_name + ')'
-          else:
-            code = wrap_basic(hold)
+        code = hold_half(hold)
         results += (str(code) + ',').ljust(width)
   results += '\\\n'
 results = results.rstrip(', \\\n')
+
 results
 #+END_SRC
 
 #+RESULTS: table-layer-half
-: "Boot",            U_DF(U_TAP),       U_DF(U_EXTRA),     U_DF(U_BASE),      U_NA,              "RGB Toggle",      "RGB Mode",        "RGB Hue",         "RGB Sat",         "RGB Val",         \
-: "Meta",            "Alt",             "Ctrl",            "Shift",           U_NA,              "EP Toggle",       "Prev",            "Volume Up",       "Volume Down",     "Next",            \
-: U_NA,              "AltGR",           U_DF(U_SYM),       U_DF(U_MOUSE),     U_NA,              "Out Toggle",      "BT 0",            "BT 1",            "BT 2",            "BT 3",            \
+: U_BOOT,            U_DF(U_TAP),       U_DF(U_EXTRA),     U_DF(U_BASE),      U_NA,              U_S("Off", "RGB Toggle"),U_S("Mode  -", "RGB Mode  +"),U_S("Hue  -", "RGB Hue  +"),U_S("Sat  -", "RGB Sat  +"),U_S("Value  -", "RGB Value  +"),\
+: "Meta",            "Alt",             "Ctrl",            "Shift",           U_NA,              U_S("Off", "EP Toggle"),"Prev",            "Volume Down",     "Volume Up",       "Next",            \
+: U_NA,              "AltGr",           U_DF(U_SYM),       U_DF(U_MOUSE),     U_NA,              U_S("USB", "Out Toggle"),U_S("Clear", "BT  0 Select"),U_S("Clear", "BT  1 Select"),U_S("Clear", "BT  2 Select"),U_S("Clear", "BT  3 Select"),\
 : U_NP,              U_NP,              U_NA,              U_NA,              U_HELD(U_NA),      "Stop",            "Play Pause",      "Mute",            U_NP,              U_NP
 
 
