@@ -91,11 +91,28 @@ Basic keycodes are entered without a common prefix.  Symbols can be entered as-i
 
 The base layer is maintained as separate tables for tap alphas, tap thumbs, and hold.  Other layers are specified as a single hand including thumbs.  Tables are combined to produce the keymap data for each layer.
 
+The layers are listed in the following table.  The base layer must be first, with higher layers later.
+
+#+NAME: layers
+| U_BASE   | Base   |
+| U_EXTRA  | Extra  |
+| U_TAP    | Tap    |
+| U_BUTTON | Button |
+| U_NAV    | Nav    |
+| U_MOUSE  | Mouse  |
+| U_MEDIA  | Media  |
+| U_NUM    | Num    |
+| U_SYM    | Sym    |
+| U_FUN    | Fun    |
+
+
 
 *** Base
 
 
 **** Tap
+
+By default, Miryoku uses the [[https://colemakmods.github.io/mod-dh][Colemak Mod-DH]] keyboard layout.
 
 
 ***** Alphas
@@ -113,6 +130,8 @@ The base layer is maintained as separate tables for tap alphas, tap thumbs, and 
 
 
 **** Hold
+
+When keys are held down, they send these modifiers instead.
 
 #+NAME: hold
 | BOOT     | DF(U_TAP) | DF(U_EXTRA) | DF(U_BASE) |         |       | DF(U_BASE) | DF(U_EXTRA) | DF(U_TAP) | BOOT     |
@@ -505,25 +524,12 @@ Not available with ~MIRYOKU_LAYERS=FLIP~.
 *** Common
 
 
-**** layers
-
-#+NAME: layers
-| U_BASE   | Base   |
-| U_EXTRA  | Extra  |
-| U_TAP    | Tap    |
-| U_BUTTON | Button |
-| U_NAV    | Nav    |
-| U_MOUSE  | Mouse  |
-| U_MEDIA  | Media  |
-| U_NUM    | Num    |
-| U_SYM    | Sym    |
-| U_FUN    | Fun    |
-
-
 **** symbol-names
+:PROPERTIES:
+:CUSTOM_ID: symbol-names
+:END:
 
-The layer tables contain symbols as they should be recieved by the computer, but the actual keycodes sent are different.
-The appropriate mapping is governed by this table.
+The [[#layer-tables][layer tables]] use more readable symbols in place of the actual keycode names.  This table maps each of these symbols to the corresponding keycode.
 
 #+NAME: symbol-names
 | `    | GRV  |
@@ -559,9 +565,12 @@ The appropriate mapping is governed by this table.
 
 
 **** shifted-names
+:PROPERTIES:
+:CUSTOM_ID: shifted-names
+:END:
 
-Some of the codes above are aliases for shifted variants of other codes.
-These symbols don't directly have their own keycodes; therefore the following table is used to translate between shifted and unshifted keys.
+Some of the symbols in [[#symbol-names]] (and some other codes in the [[#layer-tables][layer tables]]) don't have proper keycodes, but are instead associated with aliases for sending ~shift~ plus some base keycode.
+If the target format is svg, then this table is used to assign these shifted names.
 
 #+NAME: shifted-names
 | Base     | Shifted  |
@@ -604,7 +613,7 @@ These symbols don't directly have their own keycodes; therefore the following ta
 
 **** mods
 
-Modifiers usable in hold table.  Need to have the same name for ~KC_~ and ~_T~ versions.
+Modifiers usable in hold table.  They need to have the same name for ~KC_~ and ~_T~ versions.
 
 #+NAME: mods
 | LSFT | LCTL | LALT | LGUI | ALGR |
@@ -612,9 +621,11 @@ Modifiers usable in hold table.  Need to have the same name for ~KC_~ and ~_T~ v
 
 **** keycode-translation
 
-Source keycode to implementation equivalent (source, QMK, ZMK, KMonad, SVG, KMK).
+Different target formats can express the same keycode in slightly different ways.  This table maps from general source keycodes to the target-specific implementation.
 
 #+NAME: keycode-translation
+| Source      | QMK              | ZMK           | KMonad        | SVG           | KMK           |
+|-------------+------------------+---------------+---------------+---------------+---------------|
 | A           | A                | A             | a             | A             | A             |
 | B           | B                | B             | b             | B             | B             |
 | C           | C                | C             | c             | C             | C             |
@@ -846,9 +857,9 @@ This block takes and argument specifying the target format /(default: ~"svg"~)/ 
    - a dictionary ~keycode_translation_dict~ associating source keycodes with their counterparts in the target format.
 4. defines the following helper functions:
    - ~wrap_basic~ to wrap basic keycodes with the target-appropriate prefix and suffix
-   - ~convert_symbol~ to convert the table symbols to codes
-   - ~get_translated~ to translate keycodes to the target format
-   - ~get_shifted~ to return the alias keycode for a shifted key
+   - ~convert_symbol~ to convert the table symbols to codes using [[#symbol-names]]
+   - ~get_translated~ to translate keycodes to the target format using [[#keycode-translation]]
+   - ~get_shifted~ to return the alias keycode for a shifted key using [[#shifted-names]] (only used if target is svg)
    - ~trim_shifted~ *undocumented*.
 
 #+NAME: table-layer-init
@@ -1150,7 +1161,7 @@ This block takes the following arguments:
 results = ''
 for full_row, hold_row in zip(alphas_table + thumbs_table, hold_table):
   for key, hold in zip(full_row, hold_row):
-    code = symbol_names_dict.get(key, key)
+    code = convert_symbol(key)
     if code == '':
       code = fill
     code = keycode_translation_dict.get(code, code)
