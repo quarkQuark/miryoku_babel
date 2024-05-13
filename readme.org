@@ -85,13 +85,13 @@ Visit the Actions tab, select the Build workflow, select Run workflow, select th
 :CUSTOM_ID: layer-tables
 :END:
 
-The layers are maintained in tables.  ~U_NP~ indicates the key is not present and is used to fill in the table around the thumb keys.
+The layers are maintained in tables.  Layers can be modified, added or removed simply by editing the tables in this section.
 
-Basic keycodes are entered without a common prefix.  Symbols can be entered as-is, except for '-' (~MINS~), '.' (~DOT~), '|' (~PIPE~), and '"' (~DQUO~). Empty cells are unused.
+Basic keycodes are entered without a common prefix.  Symbols can be entered as-is, except for '-' (~MINS~), '.' (~DOT~), '|' (~PIPE~), and '"' (~DQUO~). Empty cells are unused.  ~U_NP~ indicates the key is not present and is used to fill in the table around the thumb keys.
 
 The base layer is maintained as separate tables for tap alphas, tap thumbs, and hold.  Other layers are specified as a single hand including thumbs.  Tables are combined to produce the keymap data for each layer.
 
-The layers are listed in the following table.  The base layer must be first, with higher layers later.
+The layers are listed in the table below.  The base layer must be first, with higher layers later.  `Mode' specifies when a layer only changes the keys on the right (`r') or left (`l') halves of the keyboard.  For layers activated using thumb keys, `Opposite' records which layer is activated by the same thumb key on the opposite hand.
 
 #+NAME: layers
 | Name   | Code     | Mode | Opposite |
