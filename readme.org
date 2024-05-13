@@ -1202,10 +1202,120 @@ results
 
 **** layer-body
 
-Body of miryoku_layer_selection.h.
+Generates the body of ~miryoku_layer_selection.h~.
 
 #+NAME: layer-body
-#+BEGIN_SRC C :main no :tangle no
+#+begin_src python :session 'none' :var layers_table=layers :var layouts=layout-list :wrap "src C :main no :tangle no"
+  layer_dict = {layer[0]: layer[1:] for layer in layers_table}
+
+  def get_alphas_definition(layer, flip):
+    type = 'ALPHAS' if layer == 'BASE' else layer
+    table_layer = 'BASE' if layer == 'EXTRA' else layer
+    default_layout = 'QWERTY' if layer == 'EXTRA' else 'COLEMAKDH'
+
+    definition = ''
+    for layout in layouts:
+      if layout == layouts[0]:
+        definition += f'    #if defined (MIRYOKU_{type}_{layout.upper()})\n'
+      else:
+        definition += f'    #elif defined (MIRYOKU_{type}_{layout.upper()})\n'
+      definition += f'      #define MIRYOKU_LAYER_{layer} '
+      definition += f'MIRYOKU_ALTERNATIVES_{table_layer}_{layout.upper()}'
+      definition += '_FLIP\n' if flip else '\n'
+
+    definition += f'    #else\n'
+    definition += f'      #define MIRYOKU_LAYER_{layer} '
+    definition += f'MIRYOKU_ALTERNATIVES_{table_layer}_{default_layout}'
+    definition += '_FLIP\n' if flip else '\n'
+    definition += '    #endif'
+    return definition
+
+  results = '''\
+  #pragma once
+
+  #include "miryoku_layer_alternatives.h"
+
+  '''
+
+  for layer in layer_dict:
+    mode = layer_dict[layer][1]
+
+    if layer == 'Button':
+      results += '''\
+  #if !defined(MIRYOKU_LAYER_BUTTON)
+    #define MIRYOKU_LAYER_BUTTON MIRYOKU_ALTERNATIVES_BUTTON
+  #endif
+  #if !defined(MIRYOKU_LAYERMAPPING_BUTTON)
+    #define MIRYOKU_LAYERMAPPING_BUTTON MIRYOKU_MAPPING
+  #endif
+
+  '''
+
+    elif mode == 'r':
+      layer = layer.upper()
+      results += f'''\
+  #if !defined(MIRYOKU_LAYER_{layer})
+    #if defined (MIRYOKU_LAYERS_FLIP)
+      #if defined (MIRYOKU_NAV_INVERTEDT)
+        #define MIRYOKU_LAYER_{layer} MIRYOKU_ALTERNATIVES_{layer}_INVERTEDT_FLIP
+      #else
+        #define MIRYOKU_LAYER_{layer} MIRYOKU_ALTERNATIVES_{layer}_FLIP
+      #endif
+    #else
+      #if defined (MIRYOKU_NAV_INVERTEDT)
+        #define MIRYOKU_LAYER_{layer} MIRYOKU_ALTERNATIVES_{layer}_INVERTEDT
+      #elif defined (MIRYOKU_NAV_VI)
+        #define MIRYOKU_LAYER_{layer} MIRYOKU_ALTERNATIVES_{layer}_VI
+      #else
+        #define MIRYOKU_LAYER_{layer} MIRYOKU_ALTERNATIVES_{layer}
+      #endif
+    #endif
+  #endif
+  #if !defined(MIRYOKU_LAYERMAPPING_{layer})
+    #define MIRYOKU_LAYERMAPPING_{layer} MIRYOKU_MAPPING
+  #endif
+
+  '''
+
+    elif mode == 'l':
+      layer = layer.upper()
+      results += f'''\
+  #if !defined(MIRYOKU_LAYER_{layer})
+    #if defined (MIRYOKU_LAYERS_FLIP)
+      #define MIRYOKU_LAYER_{layer} MIRYOKU_ALTERNATIVES_{layer}_FLIP
+    #else
+      #define MIRYOKU_LAYER_{layer} MIRYOKU_ALTERNATIVES_{layer}
+    #endif
+  #endif
+  #if !defined(MIRYOKU_LAYERMAPPING_{layer})
+    #define MIRYOKU_LAYERMAPPING_{layer} MIRYOKU_MAPPING
+  #endif
+
+  '''
+
+    else:
+      layer = layer.upper()
+      results += f'''\
+  #if !defined(MIRYOKU_LAYER_{layer})
+    #if defined (MIRYOKU_LAYERS_FLIP)
+  {get_alphas_definition(layer, True)}
+    #else
+  {get_alphas_definition(layer, False)}
+    #endif
+  #endif
+  #if !defined(MIRYOKU_LAYERMAPPING_{layer})
+    #define MIRYOKU_LAYERMAPPING_{layer} MIRYOKU_MAPPING
+  #endif
+
+  '''
+
+  results = results[:-1]
+
+  return results
+#+end_src
+
+#+RESULTS: layer-body
+#+begin_src C :main no :tangle no
 #pragma once
 
 #include "miryoku_layer_alternatives.h"
@@ -1477,7 +1587,7 @@ Body of miryoku_layer_selection.h.
 #if !defined(MIRYOKU_LAYERMAPPING_FUN)
   #define MIRYOKU_LAYERMAPPING_FUN MIRYOKU_MAPPING
 #endif
-#+END_SRC
+#+end_src
 
 
 **** layer-names-list
@@ -2111,7 +2221,7 @@ return sys.version
 
 <<license-qmk>>
 
-<<layer-body>>
+<<layer-body()>>
 #+END_SRC
 
 
@@ -2369,7 +2479,7 @@ return sys.version
 // https://github.com/manna-harbour/miryoku
 // generated -*- buffer-read-only: t -*-
 
-<<layer-body>>
+<<layer-body()>>
 #+END_SRC
 
 
@@ -2627,7 +2737,7 @@ return sys.version
 // https://github.com/manna-harbour/miryoku
 // generated -*- buffer-read-only: t -*-
 
-<<layer-body>>
+<<layer-body()>>
 #+END_SRC
 
 
@@ -2883,7 +2993,7 @@ return sys.version
 // https://github.com/manna-harbour/miryoku
 // generated -*- buffer-read-only: t -*-
 
-<<layer-body>>
+<<layer-body()>>
 #+END_SRC
 
 
@@ -3141,7 +3251,7 @@ return sys.version
 // https://github.com/manna-harbour/miryoku
 // generated -*- buffer-read-only: t -*-
 
-<<layer-body>>
+<<layer-body()>>
 #+END_SRC
 
 
